@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>webssh</title>
+    <link rel="icon" href="/static/favicon.ico" />
+    <link rel="stylesheet" href="/static/xterm/xterm.css"/>
+    <link rel="stylesheet" href="/static/xterm/style.css"/>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="terminal"></div>
+
+<script src="/static/xterm/xterm.js"></script>
+<script src="/static/xterm/terminado.js"></script>
+<script>
+    terminado.apply(Terminal);
+    term = new Terminal(
+        {
+            cols: 238,           //每一行亦可以输入的字符数量
+            rows: 57,            //每一页最多显示多少行
+            // 如果想要改变这两个值，后台paramiko的get_pty必须等于这两个值
+            useStyle: true,      //启用快捷建
+            cursorBlink: true    //光标闪烁
+
+        }
+    ),
+        protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://',
+        socketURL = protocol + location.hostname + ((location.port) ? (':' + location.port) : '') + '/webssh/';
+    sock = new WebSocket(socketURL);
+
+    sock.addEventListener('open', function () {
+        term.terminadoAttach(sock);
+    });
+
+    sock.addEventListener('message', function (recv) {
+        var content = JSON.parse(recv.data.toString());
+        term.write(content)
+    });
+
+    term.on('data', function (data) {
+        var send_data = JSON.stringify({'data': data});
+        sock.send(send_data)
+    });
+
+    term.open(document.getElementById('terminal'));
+</script>
+
+
+</body>
+</html>

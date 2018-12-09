@@ -1,0 +1,11 @@
+db.sqlite3
+.idea
+*.pyc
+*.egg
+*.egg-info
+*.log
+env/
+.venv
+venv/
+ENV/
+migrations/
