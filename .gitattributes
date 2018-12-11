@@ -1,0 +1,6 @@
+*.js linguist-language=xterm
+*.css linguist-language=xterm
+*.py linguist-language=python
+*.py linguist-language=django
+*.py linguist-language=webssh
+*.py linguist-language=paramiko
