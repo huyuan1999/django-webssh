@@ -3,55 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <title>webssh</title>
-    <link rel="icon" href="/static/favicon.ico" />
+    <link rel="icon" href="/static/favicon.ico"/>
     <link rel="stylesheet" href="/static/xterm/xterm.css"/>
     <link rel="stylesheet" href="/static/xterm/style.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+          crossorigin="anonymous">
     <style>
         body {
             padding: 0;
             margin: 0;
         }
+
+        .input-width {
+            width: 20%;
+        }
+
+        .hide {
+            display: none;
+        }
     </style>
 </head>
 <body>
 
-<div id="terminal"></div>
+<div style="margin-top: 10px" id="form">
+    <form class="form-horizontal">
+        <div class="form-group">
+            <label class="col-sm-2 control-label">主机地址</label>
+            <div class="col-sm-10">
+                <input type="text" class="input-width form-control" id="host" placeholder="host">
+            </div>
+        </div>
 
+        <div class="form-group">
+            <label class="col-sm-2 control-label">端口</label>
+            <div class="col-sm-10">
+                <input type="text" class="input-width form-control" id="port" value="22">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">用户名</label>
+            <div class="col-sm-10">
+                <input type="text" class="input-width form-control" id="user" placeholder="user">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">认证类型</label>
+            <div class="col-sm-10">
+                <label class="radio-inline">
+                    <input type="radio" name="inlineRadioOptions" id="inlineRadio1" value="pwd" checked> 密码认证
+                </label>
+                <label class="radio-inline">
+                    <input type="radio" name="inlineRadioOptions" id="inlineRadio2" value="key"> 秘钥认证
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">密码</label>
+            <div class="col-sm-10">
+                <input type="password" class="input-width form-control" id="password" placeholder="password">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">秘钥路径</label>
+            <div class="col-sm-10">
+                <input type="text" class="input-width form-control" id="pkey" placeholder="示例: /root/.ssh/id_dsa">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label"></label>
+            <div class="col-sm-10">
+                <span id="helpBlock" class="help-block">
+                   注意:
+                    <p style="color: red">1、当认证类型为密码认证时, 秘钥输入框的内容将被忽略</p>
+                    <p style="color: red">2、当认证类型为秘钥认证时, 如果密码输入框不为空, 则密码输入框的内容将作为秘钥的解密密码</p>
+                </span>
+            </div>
+        </div>
+
+
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="button" class="btn btn-default" onclick="webssh()">登&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;录
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="django-webssh-terminal">
+    <div id="terminal"></div>
+</div>
+
+
+<script src="/static/jquery.min.js"></script>
 <script src="/static/xterm/xterm.js"></script>
 <script src="/static/xterm/terminado.js"></script>
-<script>
-    terminado.apply(Terminal);
-    term = new Terminal(
-        {
-            cols: 238,           //每一行亦可以输入的字符数量
-            rows: 57,            //每一页最多显示多少行
-            // 如果想要改变这两个值，后台paramiko的get_pty必须等于这两个值
-            useStyle: true,      //启用快捷建
-            cursorBlink: true    //光标闪烁
-
-        }
-    ),
-        protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://',
-        socketURL = protocol + location.hostname + ((location.port) ? (':' + location.port) : '') + '/webssh/';
-    sock = new WebSocket(socketURL);
-
-    sock.addEventListener('open', function () {
-        term.terminadoAttach(sock);
-    });
-
-    sock.addEventListener('message', function (recv) {
-        var content = JSON.parse(recv.data.toString());
-        term.write(content)
-    });
-
-    term.on('data', function (data) {
-        var send_data = JSON.stringify({'data': data});
-        sock.send(send_data)
-    });
-
-    term.open(document.getElementById('terminal'));
-</script>
-
-
+<script src="/static/webssh.js"></script>
 </body>
 </html>
