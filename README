@@ -20,12 +20,8 @@
 ```	
 
 
-<<<<<<< HEAD
-demo:
-=======
-demo
 
->>>>>>> 3f3453abfa229e6ce3bcf19cfd19a74c6d17b2ce
+demo:
 ![Image](https://github.com/huyuan1999/django-webssh/blob/master/demo/ssh.png)
 ![Image](https://github.com/huyuan1999/django-webssh/blob/master/demo/ssh1.png)
 ![Image](https://github.com/huyuan1999/django-webssh/blob/master/demo/ssh2.png)
@@ -33,9 +29,3 @@ demo
 ![Image](https://github.com/huyuan1999/django-webssh/blob/master/demo/ssh4.png)
 ![Image](https://github.com/huyuan1999/django-webssh/blob/master/demo/ssh5.png)
 ![Image](https://github.com/huyuan1999/django-webssh/blob/master/demo/ssh6.png)
-<<<<<<< HEAD
-	
-=======
-
-	
->>>>>>> 3f3453abfa229e6ce3bcf19cfd19a74c6d17b2ce
