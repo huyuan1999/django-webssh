@@ -24,6 +24,10 @@ class WebSSH(WebsocketConsumer):
             auth = obj.data.get('auth')
             pkey = obj.data.get('pkey')
             passwd = obj.data.get('password')
+
+            width = int(obj.data.get('width'))
+            height = int(obj.data.get('height'))
+
             if passwd:
                 password = base64.b64decode(passwd)
             else:
@@ -42,8 +46,8 @@ class WebSSH(WebsocketConsumer):
                     password=password,
                     pkey=pkey,
                     port=port,
-                    pty_width=200,
-                    pty_height=50
+                    pty_width=width,
+                    pty_height=height
                 )
             else:
                 self.send('key connect 出现错误')
@@ -57,8 +61,8 @@ class WebSSH(WebsocketConsumer):
                     user=user,
                     password=password,
                     port=port,
-                    pty_width=200,
-                    pty_height=50
+                    pty_width=width,
+                    pty_height=height
                 )
             else:
                 self.send('pwd connect 出现错误')

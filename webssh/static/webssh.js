@@ -1,10 +1,3 @@
-function sleep(delay) {
-  var start = (new Date()).getTime();
-  while ((new Date()).getTime() - start < delay) {
-    continue;
-  }
-}
-
 function get_connect_argv() {
     var host = $('#host').val();
     var port = $('#port').val();
@@ -18,23 +11,39 @@ function get_connect_argv() {
     return argv
 }
 
+function get_term_size() {
+    var init_width = 8.9;
+    var init_height = 16.5;
+
+    var windows_width = $(window).width();
+    var windows_height = $(window).height();
+
+    return {
+        cols: Math.floor(windows_width / init_width),
+        rows: Math.floor( windows_height / init_height),
+    }
+}
+
 
 function webssh() {
     var argv = get_connect_argv();
+    var cols = get_term_size().cols;
+    var rows = get_term_size().rows;
 
     terminado.apply(Terminal);
     var term = new Terminal(
         {
-            cols: 200,
-            rows: 50,
+            cols: cols,
+            rows: rows,
             useStyle: true,
             cursorBlink: true
         }
         ),
         protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://',
         socketURL = protocol + location.hostname + ((location.port) ? (':' + location.port) : '') +
-            '/webssh/?' + argv;
+            '/webssh/?' + argv + '&width=' + cols + '&height=' + rows;
 
+    console.log(socketURL);
     var sock = new WebSocket(socketURL);
 
     sock.addEventListener('open', function () {

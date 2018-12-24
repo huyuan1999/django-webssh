@@ -13,3 +13,5 @@ class ValidationData(forms.Form):
     auth = forms.CharField(max_length=16)
     pkey = forms.FileField(required=False)
     password = forms.CharField(max_length=180, required=False)
+    width = forms.IntegerField()
+    height = forms.IntegerField()
