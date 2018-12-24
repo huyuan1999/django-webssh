@@ -16,10 +16,16 @@
 启动:
 	cd django-webssh/webssh/
 	python3.6 manage.py runserver 0.0.0.0:8000
+	![Image](https://github.com/huyuan1999/django-webssh/blob/master/demo/ssh.png)
 ```	
 
 
+<<<<<<< HEAD
 demo:
+=======
+demo
+
+>>>>>>> 3f3453abfa229e6ce3bcf19cfd19a74c6d17b2ce
 ![Image](https://github.com/huyuan1999/django-webssh/blob/master/demo/ssh.png)
 ![Image](https://github.com/huyuan1999/django-webssh/blob/master/demo/ssh1.png)
 ![Image](https://github.com/huyuan1999/django-webssh/blob/master/demo/ssh2.png)
@@ -27,4 +33,9 @@ demo:
 ![Image](https://github.com/huyuan1999/django-webssh/blob/master/demo/ssh4.png)
 ![Image](https://github.com/huyuan1999/django-webssh/blob/master/demo/ssh5.png)
 ![Image](https://github.com/huyuan1999/django-webssh/blob/master/demo/ssh6.png)
+<<<<<<< HEAD
 	
+=======
+
+	
+>>>>>>> 3f3453abfa229e6ce3bcf19cfd19a74c6d17b2ce
