@@ -8,7 +8,8 @@ class SSH:
     def __init__(self, websocker):
         self.websocker = websocker
 
-    def connect(self, host, user, password, pkey=None, port=22, timeout=30, term='xterm', pty_width=80, pty_height=24):
+    def connect(self, host, user, password, pkey=None, pkey_obj=None, port=22, timeout=30,
+                term='xterm', pty_width=80, pty_height=24):
         try:
             ssh_client = paramiko.SSHClient()
             ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -18,8 +19,18 @@ class SSH:
                       paramiko.DSSKey.from_private_key_file(pkey) or \
                       paramiko.ECDSAKey.from_private_key_file(pkey) or \
                       paramiko.Ed25519Key.from_private_key_file(pkey)
+
                 ssh_client.connect(username=user, passphrase=password,
                                    hostname=host, port=port, pkey=key, timeout=timeout)
+            elif pkey_obj:
+                key = paramiko.RSAKey.from_private_key(pkey_obj) or \
+                      paramiko.DSSKey.from_private_key(pkey_obj) or \
+                      paramiko.ECDSAKey.from_private_key(pkey_obj) or \
+                      paramiko.Ed25519Key.from_private_key(pkey_obj)
+
+                ssh_client.connect(username=user, passphrase=password,
+                                   hostname=host, port=port, pkey=key, timeout=timeout)
+
             else:
                 ssh_client.connect(username=user, password=password,
                                    hostname=host, port=port, timeout=timeout)

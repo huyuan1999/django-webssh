@@ -1,3 +1,10 @@
+function sleep(delay) {
+  var start = (new Date()).getTime();
+  while ((new Date()).getTime() - start < delay) {
+    continue;
+  }
+}
+
 function get_connect_argv() {
     var host = $('#host').val();
     var port = $('#port').val();
@@ -23,7 +30,7 @@ function webssh() {
             useStyle: true,
             cursorBlink: true
         }
-    ),
+        ),
         protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://',
         socketURL = protocol + location.hostname + ((location.port) ? (':' + location.port) : '') +
             '/webssh/?' + argv;
