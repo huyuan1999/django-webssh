@@ -1,20 +1,23 @@
+```
 开发环境: 
     deepin 15
-    python 3.5
+    python 3.6
 
-python 库:
-    Django==2.0.6
-    paramiko==2.4.1
-    channels==2.1.5
-
-xterm.js:
-    3.8
-
+	
+安装:(Centos 7 环境)
+	git clone https://github.com/huyuan1999/django-webssh.git
+	yum -y install epel-release gcc
+	yum -y install python36 python36-devel
+	curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+	python3.6 get-pip.py
+	python3.6 -m pip install Django==2.0.6 paramiko==2.4.1 channels==2.1.5
+	
+	
 启动:
-    python3.5 manage.py runserver
-    默认连接 127.0.0.1
-    默认端口 22
-    默认用户 root
-    默认密码 123
-  
-    生成环境中自行修改, 所有默认值定义在 django_webssh/tools/channel/websocket.py 中
+	cd django-webssh/webssh/
+	python3.6 manage.py runserver 0.0.0.0:8000
+```	
+
+
+demo
+	
