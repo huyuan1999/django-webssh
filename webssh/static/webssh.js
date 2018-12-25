@@ -1,15 +1,88 @@
-function get_connect_argv() {
+function post_data() {
+    var csrf = $("[name='csrfmiddlewaretoken']").val();
     var host = $('#host').val();
     var port = $('#port').val();
     var user = $('#user').val();
-    var auth = $("input[name='inlineRadioOptions']:checked").val();
+    var auth = $("input[name='auth']:checked").val();
     var pwd = $('#password').val();
     var password = window.btoa(pwd);
-    var pkey = $('#pkey').val();
 
-    var argv = 'host=' + host + '&port=' + port + '&user=' + user + '&auth=' + auth + '&password=' + password + '&pkey=' + pkey;
-    return argv
+    var data = {
+        'host': host,
+        'port': port,
+        'user': user,
+        'auth': auth,
+        'password': password,
+    };
+
+    var unique = null;
+
+    if (auth === 'key') {
+        var pkey = $('#pkey')[0].files[0];
+        var formData = new FormData();
+        formData.append('pkey', pkey);
+        formData.append('data', JSON.stringify(data));
+        formData.append('csrfmiddlewaretoken', csrf);
+
+        $.ajax({
+            url: "/",
+            type: "post",
+            data: formData,
+            async: false,
+            contentType: false,
+            processData: false,
+            mimeType: 'multipart/form-data',
+            success: function (result) {
+                var obj = JSON.parse(result);
+                var code = obj.code;
+                if (code === 0) {
+                    unique = obj.message;
+                } else {
+                    var error = obj.error;
+                    try {
+                        var error_obj = JSON.parse(error);
+                        Object.keys(error_obj).forEach(function (key) {
+                            var error_info = 'field: ' + key + ' ' + error_obj[key][0].message;
+                            $('#' + key).after(' ' + '<span style="color: red">' + error_info + '</span>');
+                        })
+                    } catch (e) {
+                        alert(error);
+                    }
+                }
+            }
+        })
+    } else {
+        $.ajax({
+            url: "/",
+            type: "post",
+            data: {'data': JSON.stringify(data), 'csrfmiddlewaretoken': csrf},
+            async: false,
+            success: function (result) {
+                var obj = result;
+                var code = obj.code;
+                if (code === 0) {
+                    unique = obj.message;
+                } else {
+                    var error = obj.error;
+                    try {
+                        var error_obj = JSON.parse(error);
+                        Object.keys(error_obj).forEach(function (key) {
+                            var error_info = 'field: ' + key + ' ' + error_obj[key][0].message;
+                            $('#' + key).after(' ' + '<span style="color: red">' + error_info + '</span>');
+                        })
+                    } catch (e) {
+                        alert(error);
+                    }
+                }
+            }
+        })
+    }
+
+    if (unique !== null) {
+        webssh(unique)
+    }
 }
+
 
 function get_term_size() {
     var init_width = 8.9;
@@ -20,13 +93,12 @@ function get_term_size() {
 
     return {
         cols: Math.floor(windows_width / init_width),
-        rows: Math.floor( windows_height / init_height),
+        rows: Math.floor(windows_height / init_height),
     }
 }
 
 
-function webssh() {
-    var argv = get_connect_argv();
+function webssh(unique) {
     var cols = get_term_size().cols;
     var rows = get_term_size().rows;
 
@@ -41,7 +113,7 @@ function webssh() {
         ),
         protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://',
         socketURL = protocol + location.hostname + ((location.port) ? (':' + location.port) : '') +
-            '/webssh/?' + argv + '&width=' + cols + '&height=' + rows;
+            '/webssh/?'+ 'unique=' + unique + '&width=' + cols + '&height=' + rows;
 
     console.log(socketURL);
     var sock = new WebSocket(socketURL);

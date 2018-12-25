@@ -4,14 +4,23 @@
 # @File    : tools.py
 
 from django import forms
+from django_webssh import models
+import time
+import random
+import hashlib
 
 
-class ValidationData(forms.Form):
-    host = forms.CharField(max_length=32)
-    port = forms.IntegerField()
-    user = forms.CharField(max_length=32)
-    auth = forms.CharField(max_length=16)
-    pkey = forms.FileField(required=False)
-    password = forms.CharField(max_length=180, required=False)
-    width = forms.IntegerField()
-    height = forms.IntegerField()
+
+class ValidationData(forms.ModelForm):
+    class Meta:
+        model = models.HostTmp
+        exclude = ['datetime']
+
+
+def unique():
+    ctime = str(time.time())
+    salt = str(random.random())
+    m = hashlib.md5(bytes(salt, encoding='utf-8'))
+    m.update(bytes(ctime, encoding='utf-8'))
+    return m.hexdigest()
+

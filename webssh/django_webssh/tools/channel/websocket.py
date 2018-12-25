@@ -1,7 +1,8 @@
 from channels.generic.websocket import WebsocketConsumer
 from django_webssh.tools.ssh import SSH
 from django.http.request import QueryDict
-from django_webssh.tools import tools
+from django_webssh import models
+from django.utils.six import StringIO
 import json
 import base64
 
@@ -13,61 +14,55 @@ class WebSSH(WebsocketConsumer):
         self.accept()
 
         query_string = self.scope['query_string']
-        connet_info = QueryDict(query_string=query_string, encoding='utf-8')
-        obj = tools.ValidationData(connet_info)
+        connet_argv = QueryDict(query_string=query_string, encoding='utf-8')
+        unique = connet_argv.get('unique')
+        width = connet_argv.get('width')
+        height = connet_argv.get('height')
 
-        if obj.is_valid():
-            self.ssh = SSH(websocker=self)
-            host = obj.data.get('host')
-            port = int(obj.data.get('port'))
-            user = obj.data.get('user')
-            auth = obj.data.get('auth')
-            pkey = obj.data.get('pkey')
-            passwd = obj.data.get('password')
+        width = int(width)
+        height = int(height)
 
-            width = int(obj.data.get('width'))
-            height = int(obj.data.get('height'))
+        connect_info = models.HostTmp.objects.get(unique=unique)
 
-            if passwd:
-                password = base64.b64decode(passwd)
-            else:
-                password = None
+        host = connect_info.host
+        port = connect_info.port
+        user = connect_info.user
+        auth = connect_info.auth
+        pwd = connect_info.password
+
+        if pwd:
+            password = base64.b64decode(pwd).decode('utf-8')
         else:
-            print(obj.errors.as_json())
-            self.send('出现错误')
-            self.close()
-            return
+            password = None
+
+        self.ssh = SSH(websocker=self)
 
         if auth == 'key':
-            if pkey:
-                self.ssh.connect(
-                    host=host,
-                    user=user,
-                    password=password,
-                    pkey=pkey,
-                    port=port,
-                    pty_width=width,
-                    pty_height=height
-                )
-            else:
-                self.send('key connect 出现错误')
-                self.close()
-                return
+            pkey = connect_info.pkey
+            obj = StringIO()
+            obj.write(pkey)
+            obj.flush()
+            obj.seek(0)
+            self.pkey = obj
 
-        elif auth == 'pwd':
-            if password:
-                self.ssh.connect(
-                    host=host,
-                    user=user,
-                    password=password,
-                    port=port,
-                    pty_width=width,
-                    pty_height=height
-                )
-            else:
-                self.send('pwd connect 出现错误')
-                self.close()
-                return
+            self.ssh.connect(
+                host=host,
+                user=user,
+                password=password,
+                pkey=self.pkey,
+                port=port,
+                pty_width=width,
+                pty_height=height
+            )
+        else:
+            self.ssh.connect(
+                host=host,
+                user=user,
+                password=password,
+                port=port,
+                pty_width=width,
+                pty_height=height
+            )
 
     def disconnect(self, close_code):
         try:
