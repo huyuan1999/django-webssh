@@ -1,7 +1,9 @@
 import paramiko
 from threading import Thread
+from django_webssh.tools.tools import get_key_obj
 import socket
 import json
+
 
 
 class SSH:
@@ -15,7 +17,11 @@ class SSH:
             ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
             if pkey:
-                key = paramiko.RSAKey.from_private_key(pkey, password=password)
+                key = get_key_obj(paramiko.RSAKey, pkey_obj=pkey, password=password) or \
+                get_key_obj(paramiko.DSSKey, pkey_obj=pkey, password=password) or \
+                get_key_obj(paramiko.ECDSAKey, pkey_obj=pkey, password=password) or \
+                get_key_obj(paramiko.Ed25519Key, pkey_obj=pkey, password=password)
+
                 ssh_client.connect(username=user, hostname=host, port=port, pkey=key, timeout=timeout)
             else:
                 ssh_client.connect(username=user, password=password, hostname=host, port=port, timeout=timeout)

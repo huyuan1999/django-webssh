@@ -85,12 +85,12 @@ function post_data() {
 
 
 function get_term_size() {
-    var init_width = 8.9;
-    var init_height = 16.5;
+    var init_width = 9;
+    var init_height = 17;
 
     var windows_width = $(window).width();
     var windows_height = $(window).height();
-
+    console.log(windows_width, windows_height);
     return {
         cols: Math.floor(windows_width / init_width),
         rows: Math.floor(windows_height / init_height),
@@ -102,7 +102,6 @@ function webssh(unique) {
     var cols = get_term_size().cols;
     var rows = get_term_size().rows;
 
-    terminado.apply(Terminal);
     var term = new Terminal(
         {
             cols: cols,
@@ -115,14 +114,12 @@ function webssh(unique) {
         socketURL = protocol + location.hostname + ((location.port) ? (':' + location.port) : '') +
             '/webssh/?'+ 'unique=' + unique + '&width=' + cols + '&height=' + rows;
 
-    console.log(socketURL);
     var sock = new WebSocket(socketURL);
 
     sock.addEventListener('open', function () {
         $('#form').addClass('hide');
         $('#django-webssh-terminal').removeClass('hide');
-
-        term.terminadoAttach(sock);
+        term.open(document.getElementById('terminal'));
     });
 
     sock.addEventListener('message', function (recv) {
@@ -135,5 +132,5 @@ function webssh(unique) {
         sock.send(send_data)
     });
 
-    term.open(document.getElementById('terminal'));
+
 }
