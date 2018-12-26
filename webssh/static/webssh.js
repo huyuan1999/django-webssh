@@ -90,7 +90,7 @@ function get_term_size() {
 
     var windows_width = $(window).width();
     var windows_height = $(window).height();
-    console.log(windows_width, windows_height);
+
     return {
         cols: Math.floor(windows_width / init_width),
         rows: Math.floor(windows_height / init_height),
@@ -112,7 +112,7 @@ function webssh(unique) {
         ),
         protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://',
         socketURL = protocol + location.hostname + ((location.port) ? (':' + location.port) : '') +
-            '/webssh/?'+ 'unique=' + unique + '&width=' + cols + '&height=' + rows;
+            '/webssh/?' + 'unique=' + unique + '&width=' + cols + '&height=' + rows;
 
     var sock = new WebSocket(socketURL);
 
@@ -123,14 +123,39 @@ function webssh(unique) {
     });
 
     sock.addEventListener('message', function (recv) {
-        var content = JSON.parse(recv.data.toString());
-        term.write(content)
+        var data = JSON.parse(recv.data);
+        var message = data.message;
+        var status = data.status;
+        if (status === 0) {
+            term.write(message)
+        } else {
+            window.location.reload()
+            // $('#django-webssh-terminal').addClass('hide');
+            // $('#form').removeClass('hide');
+        }
     });
 
+    var message = {'status': 0, 'data': null, 'cols': null, 'rows': null};
+    /*
+    * status 为 0 时, 将用户输入的数据通过 websocket 传递给后台, data 为传递的数据, 忽略 cols 和 rows 参数
+    * status 为 1 时, resize pty ssh 终端大小, cols 为每行显示的最大字数, rows 为每列显示的最大字数, 忽略 data 参数
+    * */
+
     term.on('data', function (data) {
-        var send_data = JSON.stringify({'data': data});
+        message['status'] = 0;
+        message['data'] = data;
+        var send_data = JSON.stringify(message);
         sock.send(send_data)
     });
 
-
+    $(window).resize(function () {
+        var cols = get_term_size().cols;
+        var rows = get_term_size().rows;
+        message['status'] = 1;
+        message['cols'] = cols;
+        message['rows'] = rows;
+        var send_data = JSON.stringify(message);
+        sock.send(send_data);
+        term.resize(cols, rows)
+    })
 }
