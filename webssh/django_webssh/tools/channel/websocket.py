@@ -38,6 +38,9 @@ class WebSSH(WebsocketConsumer):
             user = connect_info.user
             auth = connect_info.auth
             pwd = connect_info.password
+            pkey = connect_info.pkey
+
+            connect_info.delete()
 
             if pwd:
                 password = base64.b64decode(pwd).decode('utf-8')
@@ -47,7 +50,7 @@ class WebSSH(WebsocketConsumer):
             self.ssh = SSH(websocker=self, message=self.message)
 
             if auth == 'key':
-                pkey = connect_info.pkey
+                pkey = pkey
                 obj = StringIO()
                 obj.write(pkey)
                 obj.flush()
