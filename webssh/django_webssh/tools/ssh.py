@@ -10,17 +10,17 @@ class SSH:
         self.websocker = websocker
         self.message = message
 
-    def connect(self, host, user, password, pkey=None, port=22, timeout=30,
+    def connect(self, host, user, password, ssh_key=None, port=22, timeout=30,
                 term='xterm', pty_width=80, pty_height=24):
         try:
             ssh_client = paramiko.SSHClient()
             ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-            if pkey:
-                key = get_key_obj(paramiko.RSAKey, pkey_obj=pkey, password=password) or \
-                      get_key_obj(paramiko.DSSKey, pkey_obj=pkey, password=password) or \
-                      get_key_obj(paramiko.ECDSAKey, pkey_obj=pkey, password=password) or \
-                      get_key_obj(paramiko.Ed25519Key, pkey_obj=pkey, password=password)
+            if ssh_key:
+                key = get_key_obj(paramiko.RSAKey, pkey_obj=ssh_key, password=password) or \
+                      get_key_obj(paramiko.DSSKey, pkey_obj=ssh_key, password=password) or \
+                      get_key_obj(paramiko.ECDSAKey, pkey_obj=ssh_key, password=password) or \
+                      get_key_obj(paramiko.Ed25519Key, pkey_obj=ssh_key, password=password)
 
                 ssh_client.connect(username=user, hostname=host, port=port, pkey=key, timeout=timeout)
             else:
@@ -33,27 +33,22 @@ class SSH:
 
             for i in range(2):
                 recv = self.channel.recv(1024).decode('utf-8')
+
                 self.message['status'] = 0
                 self.message['message'] = recv
                 message = json.dumps(self.message)
                 self.websocker.send(message)
-
-        except socket.timeout as e:
+        except socket.timeout:
             self.message['status'] = 1
             self.message['message'] = 'ssh 连接超时'
             message = json.dumps(self.message)
             self.websocker.send(message)
-            self.websocker.close()
-        except Exception as e:
-            self.message['status'] = 1
-            self.message['message'] = str(e)
-            message = json.dumps(self.message)
-            self.websocker.send(message)
-            self.websocker.close()
+            self.close()
+        except:
+            self.close()
 
     def resize_pty(self, cols, rows):
         self.channel.resize_pty(width=cols, height=rows)
-
 
     def django_to_ssh(self, data):
         try:

@@ -15,8 +15,6 @@
 	
 启动:
 	cd django-webssh/webssh/
-	python3.6 manage.py makemigrations django_webssh
-	python3.6 manage.py migrate django_webssh
 	python3.6 manage.py runserver 0.0.0.0:8000
 
 ```	

@@ -1,7 +1,6 @@
 from channels.generic.websocket import WebsocketConsumer
 from django_webssh.tools.ssh import SSH
 from django.http.request import QueryDict
-from django_webssh import models
 from django.utils.six import StringIO
 import json
 import base64
@@ -20,67 +19,59 @@ class WebSSH(WebsocketConsumer):
     """
 
     def connect(self):
-        try:
-            self.accept()
-            query_string = self.scope['query_string']
-            connet_argv = QueryDict(query_string=query_string, encoding='utf-8')
-            unique = connet_argv.get('unique')
-            width = connet_argv.get('width')
-            height = connet_argv.get('height')
+        """
+        打开 websocket 连接, 通过前端传入的参数尝试连接 ssh 主机
+        :return:
+        """
+        self.accept()
+        query_string = self.scope.get('query_string')
+        ssh_args = QueryDict(query_string=query_string, encoding='utf-8')
 
-            width = int(width)
-            height = int(height)
+        width = ssh_args.get('width')
+        height = ssh_args.get('height')
+        width = int(width)
+        height = int(height)
 
-            connect_info = models.HostTmp.objects.get(unique=unique)
+        auth = ssh_args.get('auth')
+        ssh_key = ssh_args.get('ssh_key')
+        passwd = ssh_args.get('password')
 
-            host = connect_info.host
-            port = connect_info.port
-            user = connect_info.user
-            auth = connect_info.auth
-            pwd = connect_info.password
-            pkey = connect_info.pkey
+        host = ssh_args.get('host')
+        port = ssh_args.get('port')
+        user = ssh_args.get('user')
 
-            connect_info.delete()
+        if passwd:
+            passwd = base64.b64decode(passwd).decode('utf-8')
+        else:
+            passwd = None
 
-            if pwd:
-                password = base64.b64decode(pwd).decode('utf-8')
-            else:
-                password = None
+        self.ssh = SSH(websocker=self, message=self.message)
 
-            self.ssh = SSH(websocker=self, message=self.message)
+        ssh_connect_dict = {
+            'host': host,
+            'user': user,
+            'port': port,
+            'timeout': 30,
+            'pty_width': width,
+            'pty_height': height,
+            'password': passwd
+        }
 
-            if auth == 'key':
-                pkey = pkey
-                obj = StringIO()
-                obj.write(pkey)
-                obj.flush()
-                obj.seek(0)
-                self.pkey = obj
+        if auth == 'key':
+            string_io = StringIO()
+            string_io.write(ssh_key)
+            string_io.flush()
+            string_io.seek(0)
+            ssh_connect_dict['ssh_key'] = string_io
 
-                self.ssh.connect(
-                    host=host,
-                    user=user,
-                    password=password,
-                    pkey=self.pkey,
-                    port=port,
-                    pty_width=width,
-                    pty_height=height
-                )
-            else:
-                self.ssh.connect(
-                    host=host,
-                    user=user,
-                    password=password,
-                    port=port,
-                    pty_width=width,
-                    pty_height=height
-                )
-        except Exception as e:
-            self.message['status'] = 1
-            self.message['message'] = str(e)
-            message = json.dumps(self.message)
-            self.send(message)
-            self.close()
+        self.ssh.connect(**ssh_connect_dict)
+
+        # except NameError as e:
+        #     self.message['status'] = 1
+        #     self.message['message'] = str(e)
+        #     message = json.dumps(self.message)
+        #     self.send(message)
+        #     self.close()
 
     def disconnect(self, close_code):
         try:

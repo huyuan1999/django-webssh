@@ -1,86 +1,33 @@
-function post_data() {
-    var csrf = $("[name='csrfmiddlewaretoken']").val();
-    var host = $('#host').val();
-    var port = $('#port').val();
-    var user = $('#user').val();
-    var auth = $("input[name='auth']:checked").val();
-    var pwd = $('#password').val();
-    var password = window.btoa(pwd);
+function read_file() {
+    var resultFile = document.getElementById('pkey').files[0];
+    var reader = new FileReader();
+    var file_data;
 
-    var data = {
-        'host': host,
-        'port': port,
-        'user': user,
-        'auth': auth,
-        'password': password,
+    reader.readAsText(resultFile, 'UTF-8');
+    reader.onload = function () {
+        file_data = this.result;
     };
 
-    var unique = null;
+    return file_data
+}
+
+function get_connect_info() {
+    var host = $.trim($('#host').val());
+    var port = $.trim($('#port').val());
+    var user = $.trim($('#user').val());
+    var auth = $("input[name='auth']:checked").val();
+    var pwd = $.trim($('#password').val());
+    var password = window.btoa(pwd);
+
+    var ssh_key = null;
 
     if (auth === 'key') {
-        var pkey = $('#pkey')[0].files[0];
-        var formData = new FormData();
-        formData.append('pkey', pkey);
-        formData.append('data', JSON.stringify(data));
-        formData.append('csrfmiddlewaretoken', csrf);
-
-        $.ajax({
-            url: "/",
-            type: "post",
-            data: formData,
-            async: false,
-            contentType: false,
-            processData: false,
-            mimeType: 'multipart/form-data',
-            success: function (result) {
-                var obj = JSON.parse(result);
-                var code = obj.code;
-                if (code === 0) {
-                    unique = obj.message;
-                } else {
-                    var error = obj.error;
-                    try {
-                        var error_obj = JSON.parse(error);
-                        Object.keys(error_obj).forEach(function (key) {
-                            var error_info = 'field: ' + key + ' ' + error_obj[key][0].message;
-                            $('#' + key).after(' ' + '<span style="color: red">' + error_info + '</span>');
-                        })
-                    } catch (e) {
-                        alert(error);
-                    }
-                }
-            }
-        })
-    } else {
-        $.ajax({
-            url: "/",
-            type: "post",
-            data: {'data': JSON.stringify(data), 'csrfmiddlewaretoken': csrf},
-            async: false,
-            success: function (result) {
-                var obj = result;
-                var code = obj.code;
-                if (code === 0) {
-                    unique = obj.message;
-                } else {
-                    var error = obj.error;
-                    try {
-                        var error_obj = JSON.parse(error);
-                        Object.keys(error_obj).forEach(function (key) {
-                            var error_info = 'field: ' + key + ' ' + error_obj[key][0].message;
-                            $('#' + key).after(' ' + '<span style="color: red">' + error_info + '</span>');
-                        })
-                    } catch (e) {
-                        alert(error);
-                    }
-                }
-            }
-        })
+        ssh_key = read_file()
     }
 
-    if (unique !== null) {
-        webssh(unique)
-    }
+    var connect_info;
+    connect_info = 'host=' + host + '&port=' + port + '&user=' + user + '&auth=' + auth + '&password=' + password + '&ssh_key=' + $.trim(ssh_key);
+    return connect_info
 }
 
 
@@ -98,9 +45,10 @@ function get_term_size() {
 }
 
 
-function webssh(unique) {
+function websocket() {
     var cols = get_term_size().cols;
     var rows = get_term_size().rows;
+    var connect_info = get_connect_info();
 
     var term = new Terminal(
         {
@@ -112,16 +60,19 @@ function webssh(unique) {
         ),
         protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://',
         socketURL = protocol + location.hostname + ((location.port) ? (':' + location.port) : '') +
-            '/webssh/?' + 'unique=' + unique + '&width=' + cols + '&height=' + rows;
+            '/webssh/?' + connect_info + '&width=' + cols + '&height=' + rows;
 
-    var sock = new WebSocket(socketURL);
+    var sock;
+    sock = new WebSocket(socketURL);
 
+    // 打开 websocket 连接, 打开 web 终端
     sock.addEventListener('open', function () {
         $('#form').addClass('hide');
         $('#django-webssh-terminal').removeClass('hide');
         term.open(document.getElementById('terminal'));
     });
 
+    // 读取服务器端发送的数据并写入 web 终端
     sock.addEventListener('message', function (recv) {
         var data = JSON.parse(recv.data);
         var message = data.message;
@@ -130,17 +81,16 @@ function webssh(unique) {
             term.write(message)
         } else {
             window.location.reload()
-            // $('#django-webssh-terminal').addClass('hide');
-            // $('#form').removeClass('hide');
         }
     });
 
-    var message = {'status': 0, 'data': null, 'cols': null, 'rows': null};
     /*
     * status 为 0 时, 将用户输入的数据通过 websocket 传递给后台, data 为传递的数据, 忽略 cols 和 rows 参数
     * status 为 1 时, resize pty ssh 终端大小, cols 为每行显示的最大字数, rows 为每列显示的最大字数, 忽略 data 参数
-    * */
+    */
+    var message = {'status': 0, 'data': null, 'cols': null, 'rows': null};
 
+    // 向服务器端发送数据
     term.on('data', function (data) {
         message['status'] = 0;
         message['data'] = data;
@@ -148,6 +98,7 @@ function webssh(unique) {
         sock.send(send_data)
     });
 
+    // 监听浏览器窗口, 根据浏览器窗口大小修改终端大小
     $(window).resize(function () {
         var cols = get_term_size().cols;
         var rows = get_term_size().rows;
