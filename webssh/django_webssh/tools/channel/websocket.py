@@ -2,6 +2,8 @@ from channels.generic.websocket import WebsocketConsumer
 from django_webssh.tools.ssh import SSH
 from django.http.request import QueryDict
 from django.utils.six import StringIO
+from webssh.settings import TMP_DIR
+import os
 import json
 import base64
 
@@ -29,15 +31,17 @@ class WebSSH(WebsocketConsumer):
 
         width = ssh_args.get('width')
         height = ssh_args.get('height')
+        port = ssh_args.get('port')
+
         width = int(width)
         height = int(height)
+        port = int(port)
 
         auth = ssh_args.get('auth')
-        ssh_key = ssh_args.get('ssh_key')
+        ssh_key_name = ssh_args.get('ssh_key')
         passwd = ssh_args.get('password')
 
         host = ssh_args.get('host')
-        port = ssh_args.get('port')
         user = ssh_args.get('user')
 
         if passwd:
@@ -58,20 +62,19 @@ class WebSSH(WebsocketConsumer):
         }
 
         if auth == 'key':
+            ssh_key_file = os.path.join(TMP_DIR, ssh_key_name)
+            with open(ssh_key_file, 'r') as f:
+                ssh_key = f.read()
+
             string_io = StringIO()
             string_io.write(ssh_key)
             string_io.flush()
             string_io.seek(0)
             ssh_connect_dict['ssh_key'] = string_io
 
-        self.ssh.connect(**ssh_connect_dict)
+            os.remove(ssh_key_file)
 
-        # except NameError as e:
-        #     self.message['status'] = 1
-        #     self.message['message'] = str(e)
-        #     message = json.dumps(self.message)
-        #     self.send(message)
-        #     self.close()
+        self.ssh.connect(**ssh_connect_dict)
 
     def disconnect(self, close_code):
         try:

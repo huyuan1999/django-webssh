@@ -10,7 +10,7 @@ class SSH:
         self.websocker = websocker
         self.message = message
 
-    def connect(self, host, user, password, ssh_key=None, port=22, timeout=30,
+    def connect(self, host, user, password=None, ssh_key=None, port=22, timeout=30,
                 term='xterm', pty_width=80, pty_height=24):
         try:
             ssh_client = paramiko.SSHClient()
@@ -33,7 +33,6 @@ class SSH:
 
             for i in range(2):
                 recv = self.channel.recv(1024).decode('utf-8')
-
                 self.message['status'] = 0
                 self.message['message'] = recv
                 message = json.dumps(self.message)
@@ -53,7 +52,6 @@ class SSH:
     def django_to_ssh(self, data):
         try:
             self.channel.send(data)
-            return
         except:
             self.close()
 

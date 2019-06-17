@@ -3,26 +3,9 @@
 # @Author  : HuYuan
 # @File    : tools.py
 
-from django import forms
-from django_webssh import models
 import time
 import random
 import hashlib
-
-
-class ValidationData(forms.ModelForm):
-    class Meta:
-        model = models.HostTmp
-        exclude = ['datetime']
-
-
-def unique():
-    ctime = str(time.time())
-    salt = str(random.random())
-    m = hashlib.md5(bytes(salt, encoding='utf-8'))
-    m.update(bytes(ctime, encoding='utf-8'))
-    return m.hexdigest()
-
 
 def get_key_obj(pkeyobj, pkey_file=None, pkey_obj=None, password=None):
     if pkey_file:
@@ -38,3 +21,10 @@ def get_key_obj(pkeyobj, pkey_file=None, pkey_obj=None, password=None):
             return pkey
         except:
             pkey_obj.seek(0)
+
+def unique():
+    ctime = str(time.time())
+    salt = str(random.random())
+    m = hashlib.md5(bytes(salt, encoding='utf-8'))
+    m.update(bytes(ctime, encoding='utf-8'))
+    return m.hexdigest()

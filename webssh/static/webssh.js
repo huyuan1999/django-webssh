@@ -1,16 +1,3 @@
-function read_file() {
-    var resultFile = document.getElementById('pkey').files[0];
-    var reader = new FileReader();
-    var file_data;
-
-    reader.readAsText(resultFile, 'UTF-8');
-    reader.onload = function () {
-        file_data = this.result;
-    };
-
-    return file_data
-}
-
 function get_connect_info() {
     var host = $.trim($('#host').val());
     var port = $.trim($('#port').val());
@@ -18,15 +5,33 @@ function get_connect_info() {
     var auth = $("input[name='auth']:checked").val();
     var pwd = $.trim($('#password').val());
     var password = window.btoa(pwd);
-
     var ssh_key = null;
 
     if (auth === 'key') {
-        ssh_key = read_file()
+        var pkey = $('#pkey')[0].files[0];
+        var csrf = $("[name='csrfmiddlewaretoken']").val();
+        var formData = new FormData();
+
+        formData.append('pkey', pkey);
+        formData.append('csrfmiddlewaretoken', csrf);
+
+        $.ajax({
+            url: '/upload_ssh_key/',
+            type: 'post',
+            data: formData,
+            async: false,
+            processData: false,
+            contentType: false,
+            mimeType: 'multipart/form-data',
+            success: function (data) {
+                ssh_key = data;
+            }
+        });
     }
 
-    var connect_info;
-    connect_info = 'host=' + host + '&port=' + port + '&user=' + user + '&auth=' + auth + '&password=' + password + '&ssh_key=' + $.trim(ssh_key);
+    var connect_info1 = 'host=' + host + '&port=' + port + '&user=' + user + '&auth=' + auth;
+    var connect_info2 = '&password=' + password + '&ssh_key=' + ssh_key;
+    var connect_info = connect_info1 + connect_info2;
     return connect_info
 }
 
